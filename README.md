@@ -1,5 +1,8 @@
 # SET100 Top Gainers & Losers Alert
 
+ลิ้งค์ไปยังเอไอที่ช่วยสร้าง
+https://chatgpt.com/g/g-p-6ae01a981d208191b90116a6a767d75e-github/c/6af2c3f1-6088-83ec-8839-5bdecaf186b2
+
 ระบบแจ้งเตือนหุ้น SET100 ที่มีเปอร์เซ็นต์การเปลี่ยนแปลงราคาสูงสุด 3 อันดับแรก (Gainers) และต่ำสุด 3 อันดับแรก (Losers) ผ่าน ntfy
 
 ## กำหนดการ
