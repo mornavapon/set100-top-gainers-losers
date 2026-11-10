@@ -1,4 +1,1 @@
-requests
-pandas
-pytz
-html5lib
+settfex==0.27.0

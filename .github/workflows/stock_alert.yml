@@ -1,40 +1,48 @@
-name: SET100 Stock Alert
+name: SET100 Top Gainers & Losers
 
 on:
   schedule:
-    # 12:50 น. และ 17:50 น. ของวันจันทร์ - ศุกร์ (เวลาไทย ICT = UTC+7)
-    # 12:50 ICT = 05:50 UTC | 17:50 ICT = 10:50 UTC
-    - cron: '50 5,10 * * 1-5'
-  
-  # เพิ่มปุ่มกดรันเองในหน้า GitHub Actions (สำหรับกด Test)
+    # 12:50 and 17:50 Thailand time (UTC+7), Monday-Friday
+    - cron: "50 5,10 * * 1-5"
   workflow_dispatch:
     inputs:
-      test_mode:
-        description: 'Run connection test to ntfy?'
+      mode:
+        description: "Choose what to run"
         required: true
-        type: boolean
-        default: false
+        type: choice
+        options:
+          - alert
+          - test-ntfy
+          - check-data
+        default: alert
+
+permissions:
+  contents: read
 
 jobs:
-  run-alert:
+  set100-alert:
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     steps:
-      - name: Checkout repository
+      - name: Check out repository
         uses: actions/checkout@v4
 
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.10'
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: requirements.txt
 
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Run Stock Alert Script
+      - name: Run SET100 alert
         env:
           NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}
-          TEST_MODE: ${{ github.event.inputs.test_mode || 'false' }}
+          NTFY_TOKEN: ${{ secrets.NTFY_TOKEN }}
         run: |
-          python script.py
+          MODE="${{ github.event.inputs.mode || 'alert' }}"
+          python scripts/set100_alert.py "$MODE"
