@@ -1,6 +1,6 @@
 # SET100 Top Gainers & Losers Alert
 
-<img width="650" height="725" alt="set100- top gainer   loser" src="https://github.com/user-attachments/assets/1da48c48-3b27-4cf6-8461-2c47d13dfe68" />
+<img width="400" height="446" alt="set100- top gainer   loser" src="https://github.com/user-attachments/assets/41ca4b1d-86a9-4550-ae3d-e9714e6bc75f" />
 
 ลิ้งค์ไปยังเอไอที่ช่วยสร้าง
 https://chatgpt.com/g/g-p-6ae01a981d208191b90116a6a767d75e-github/c/6af2c3f1-6088-83ec-8839-5bdecaf186b2
