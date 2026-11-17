@@ -12,6 +12,37 @@ https://chatgpt.com/g/g-p-6ae01a981d208191b90116a6a767d75e-github/c/6af2c3f1-608
 - วันจันทร์–ศุกร์ เวลา 12:50 น. และ 17:50 น. ตามเวลาไทย
 - GitHub Actions ใช้เวลา UTC จึงตั้ง cron เป็น 05:50 และ 10:50 UTC
 
+
+## การสั่งงานผ่าน cron-job.org
+
+เพิ่ม cron-job.org เพื่อเป็นตัวกระตุ้น GitHub Actions ผ่าน GitHub REST API แทนการพึ่งพา GitHub schedule เพียงอย่างเดียว ช่วยให้กำหนดเวลาสั่งเริ่ม Workflow ได้จาก cron-job.org
+
+การทำงาน:
+1. cron-job.org เรียก GitHub API ด้วย HTTP method `POST` ไปยัง Workflow dispatch endpoint
+2. GitHub Actions รับคำสั่ง `workflow_dispatch` และรันโหมด `alert`
+3. สคริปต์ดึงข้อมูล SET100 จัดอันดับ และส่งผลผ่าน ntfy ตามปกติ
+
+การตั้งค่าปัจจุบัน:
+- ชื่อ Cronjob: `SET100 Alert เช้า-เย็น`
+- เวลาที่ตั้งใน cron-job.org: วันจันทร์–ศุกร์ เวลา 17:50 น. ตามเวลาไทย
+- Request method: `POST`
+- Workflow: `stock_alert.yml` บน branch `main`
+- Request body: `{"ref":"main","inputs":{"mode":"alert"}}`
+- ใช้ Fine-grained Personal Access Token ชื่อ `SET100-Cron-Trigger`
+- Token จำกัด Repository access เฉพาะ `set100-top-gainers-losers` และให้สิทธิ์ Repository permission: `Actions: Read and write`
+- **วันหมดอายุ Token: 17 พฤศจิกายน 2027 (พ.ศ. 2570)**
+
+### ข้อควรจำเรื่อง Token
+- เมื่อ Token หมดอายุ cron-job.org จะไม่สามารถสั่ง GitHub Actions ได้ ต้องสร้าง Token ใหม่และแก้ค่า Authorization header ใน cron-job.org
+- ห้ามนำ Token ไปใส่ในไฟล์ของ Repository, README, source code หรือ commit ลง GitHub
+- เก็บ Token ไว้ใน Authorization header ของ cron-job.org เท่านั้น และอย่าเปิดเผย Token ในภาพหน้าจอหรือแชต
+
+### หมายเหตุเรื่องตารางเวลา
+- GitHub Actions schedule เดิมยังตั้งไว้ที่ 12:50 และ 17:50 น. ตามเวลาไทย
+- cron-job.org เพิ่มการสั่งงานที่ 17:50 น. ในช่วงทดสอบ ควรตรวจสอบการทำงานจริงก่อนปิด GitHub schedule เดิม เพื่อหลีกเลี่ยงการแจ้งเตือนซ้ำในเวลา 17:50 น.
+- หลังยืนยันว่า cron-job.org ทำงานสม่ำเสมอแล้ว จึงค่อยพิจารณาปรับ GitHub schedule ให้เหลือเฉพาะเวลาที่ต้องการใช้เป็นระบบสำรอง หรือปิด schedule เดิมตามรูปแบบการใช้งาน
+- HTTP 204 จาก cron-job.org หมายถึง GitHub รับคำสั่ง dispatch แล้ว แต่ยังควรตรวจสอบ Workflow run และการแจ้งเตือน ntfy เพื่อยืนยันว่าทำงานจนครบ
+
 ## แหล่งข้อมูล
 
 ใช้ SET Index Composition API:
