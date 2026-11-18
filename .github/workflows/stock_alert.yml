@@ -1,9 +1,7 @@
 name: SET100 Top Gainers & Losers
 
 on:
-  schedule:
-    # 12:50 and 17:50 Thailand time (UTC+7), Monday-Friday
-    - cron: "50 5,10 * * 1-5"
+  # Scheduled runs are managed by Cron-job.org to prevent duplicate alerts.
   workflow_dispatch:
     inputs:
       mode:
