@@ -44,5 +44,9 @@ jobs:
           NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}
           NTFY_TOKEN: ${{ secrets.NTFY_TOKEN }}
         run: |
-          MODE="${{ github.event.inputs.mode || 'alert' }}"
+          if [ "${{ github.event_name }}" = "schedule" ] && [ "${{ github.event.schedule }}" = "50 5 * * 1-5" ]; then
+            MODE="alert-raw"
+          else
+            MODE="${{ github.event.inputs.mode || 'alert' }}"
+          fi
           python scripts/set100_alert.py "$MODE"
