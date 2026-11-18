@@ -3,7 +3,7 @@
 <img width="400" height="446" alt="set100- top gainer   loser" src="https://github.com/user-attachments/assets/41ca4b1d-86a9-4550-ae3d-e9714e6bc75f" />
 
 ลิ้งค์ไปยังเอไอที่ช่วยสร้าง
-https://chatgpt.com/g/g-p-6ae01a981d208191b90116a6a767d75e-github-daanhunaelakaarlngthun/c/6afc7c22-c4dc-83ec-85ee-94a7a70ff978
+https://chatgpt.com/g/g-p-6ae01a981d208191b90116a6a767d75e-github-daanhunaelakaarlngthun/c/6afd688f-a60c-83ec-826c-08480e673af1
 
 ระบบแจ้งเตือนหุ้น SET100 ที่มีเปอร์เซ็นต์การเปลี่ยนแปลงราคาสูงสุด 3 อันดับแรก (Gainers) และต่ำสุด 3 อันดับแรก (Losers) ผ่าน ntfy
 
