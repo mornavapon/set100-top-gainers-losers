@@ -16,6 +16,7 @@ from urllib.request import Request, urlopen
 from zoneinfo import ZoneInfo
 
 from settfex.services.set import get_index_composition
+from settfex.services.set.index.composition import IndexCompositionService
 
 BANGKOK = ZoneInfo("Asia/Bangkok")
 EXPECTED_INDEX = "SET100"
@@ -50,6 +51,58 @@ def _number(value: Any) -> float | None:
     except (TypeError, ValueError):
         return None
     return result if result == result and abs(result) != float("inf") else None
+
+
+async def fetch_snapshot_raw() -> MarketSnapshot:
+    """Fetch SET100 raw payload, bypassing Bid/Offer model validation."""
+    service = IndexCompositionService()
+    raw = await service.fetch_composition_raw(EXPECTED_INDEX, lang="en")
+    composition = raw.get("composition") or {}
+    index_symbol = str(composition.get("symbol") or "").strip().upper()
+    if index_symbol != EXPECTED_INDEX:
+        raise DataValidationError(f"API returned index {index_symbol!r}, expected {EXPECTED_INDEX}")
+    rows = composition.get("stockInfos") or []
+    if len(rows) != EXPECTED_CONSTITUENTS:
+        raise DataValidationError(f"Expected {EXPECTED_CONSTITUENTS} constituents, received {len(rows)}")
+    symbols = [str(row.get("symbol") or "").strip().upper() for row in rows]
+    if any(not symbol for symbol in symbols) or len(set(symbols)) != EXPECTED_CONSTITUENTS:
+        raise DataValidationError("Constituent symbols are blank or duplicated")
+    index_infos = raw.get("indexInfos") or []
+    index_info = index_infos[0] if index_infos else {}
+    timestamp_value = index_info.get("marketDateTime")
+    if not timestamp_value:
+        row_times = [row.get("marketDateTime") for row in rows if row.get("marketDateTime")]
+        timestamp_value = max(row_times) if row_times else None
+    try:
+        market_datetime = datetime.fromisoformat(str(timestamp_value)) if timestamp_value else None
+    except ValueError:
+        market_datetime = None
+    if market_datetime is None or market_datetime.tzinfo is None:
+        raise DataValidationError("API did not provide a timezone-aware market timestamp")
+    market_datetime = market_datetime.astimezone(BANGKOK)
+    now = datetime.now(BANGKOK)
+    if market_datetime.date() != now.date():
+        raise DataValidationError(
+            "The latest market data is not from today "
+            f"(source date: {market_datetime:%Y-%m-%d}, today: {now:%Y-%m-%d})"
+        )
+    market_status = str(index_info.get("marketStatus") or "Unknown")
+    movers: list[Mover] = []
+    for row in rows:
+        pct = _number(row.get("percentChange"))
+        if pct is not None:
+            movers.append(Mover(
+                symbol=str(row.get("symbol") or "").strip().upper(),
+                percent_change=pct,
+                last=_number(row.get("last")),
+            ))
+    if len(movers) < 90:
+        raise DataValidationError(f"Only {len(movers)} of 100 constituents have valid percentage changes")
+    gainers = sorted((x for x in movers if x.percent_change > 0),
+                     key=lambda x: (-x.percent_change, x.symbol))[:3]
+    losers = sorted((x for x in movers if x.percent_change < 0),
+                    key=lambda x: (x.percent_change, x.symbol))[:3]
+    return MarketSnapshot(market_datetime, market_status, len(rows), gainers, losers)
 
 
 async def fetch_snapshot() -> MarketSnapshot:
@@ -202,14 +255,14 @@ def run(mode: str) -> None:
         send_ntfy(message, "GitHub Connection Test")
         return
 
-    if mode not in {"alert", "check-data"}:
+    if mode not in {"alert", "alert-raw", "check-data"}:
         raise ValueError(f"Unknown mode: {mode}")
 
     try:
-        snapshot = asyncio.run(fetch_snapshot())
+        snapshot = asyncio.run(fetch_snapshot_raw() if mode == "alert-raw" else fetch_snapshot())
     except Exception as exc:
         print(f"Market data check failed: {type(exc).__name__}: {exc}", file=sys.stderr)
-        if mode == "alert":
+        if mode in {"alert", "alert-raw"}:
             now = datetime.now(BANGKOK)
             warning = (
                 "⚠️ SET100 Alert: ไม่สามารถยืนยันข้อมูลตลาดได้\n"
@@ -228,7 +281,7 @@ def run(mode: str) -> None:
     print("Gainers:", ", ".join(_format_mover(x) for x in snapshot.gainers) or "none")
     print("Losers:", ", ".join(_format_mover(x) for x in snapshot.losers) or "none")
 
-    if mode == "alert":
+    if mode in {"alert", "alert-raw"}:
         message = build_alert_message(snapshot, datetime.now(BANGKOK))
         send_ntfy(message, "SET100 Top Gainers & Losers")
 
